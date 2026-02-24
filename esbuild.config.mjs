@@ -33,7 +33,7 @@ async function createZip() {
     'main.js',
     'readme.md',
     'changelogs.md',
-    'icon.svg',
+    'icon.png',
   ];
 
   for (const file of files) {

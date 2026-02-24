@@ -5,7 +5,7 @@
   "main": "main.js",
   "version": "1.0.0",
   "repository": "https://github.com/RightFix/jupyter-reader-plugin.git",
-  "icon": "icon.svg",
+  "icon": "icon.png",
   "minVersionCode": 290,
   "license": "MIT",
   "keywords": ["jupyter", "notebook", "ipynb", "reader", "preview", "python", "data science"],
