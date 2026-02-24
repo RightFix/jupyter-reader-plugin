@@ -676,6 +676,6 @@ class JupyterReader {
 
 const jupyterReader = new JupyterReader();
 
-acode.ready(() => {
-  jupyterReader.init(acode.baseUrl);
+acode.setPluginInit(PLUGIN_ID, function(baseUrl) {
+  jupyterReader.init(baseUrl);
 });
