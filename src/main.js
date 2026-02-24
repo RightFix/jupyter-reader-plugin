@@ -285,20 +285,20 @@ class JupyterReader {
     this.notebookData = null;
     this.currentFile = null;
     this.$container = null;
+    this.isCodeMirror = false;
+    this.editorContainer = null;
   }
 
   init(baseUrl) {
     this.baseUrl = baseUrl;
     this.injectStyles();
+    this.detectEditor();
     this.registerFileHandler();
+    this.setupEditorHooks();
   }
 
-  injectStyles() {
-    if (document.getElementById("jupyter-reader-styles")) return;
-    const style = document.createElement("style");
-    style.id = "jupyter-reader-styles";
-    style.textContent = CSS;
-    document.head.appendChild(style);
+  detectEditor() {
+    this.isCodeMirror = editorManager.isCodeMirror === true;
   }
 
   registerFileHandler() {
@@ -308,6 +308,28 @@ class JupyterReader {
         await this.openNotebookFile(file.uri, file.name);
       }
     });
+  }
+
+  setupEditorHooks() {
+    editorManager.on("switch-file", (file) => {
+      this.onSwitchFile(file);
+    });
+  }
+
+  onSwitchFile(file) {
+    if (file && file.uri === this.currentFile) {
+      this.showNotebookInEditor();
+    } else {
+      this.hideNotebookFromEditor();
+    }
+  }
+
+  injectStyles() {
+    if (document.getElementById("jupyter-reader-styles")) return;
+    const style = document.createElement("style");
+    style.id = "jupyter-reader-styles";
+    style.textContent = CSS;
+    document.head.appendChild(style);
   }
 
   async openNotebookFile(uri, filename) {
@@ -576,8 +598,6 @@ class JupyterReader {
   showNotebookInEditor() {
     const main = document.querySelector("main") || document.querySelector("#main");
     const header = document.querySelector("header") || document.querySelector(".header");
-    const editor = document.getElementById("editor");
-    const editors = document.getElementById("editors");
 
     let topOffset = 44;
     if (header) {
@@ -586,8 +606,7 @@ class JupyterReader {
 
     this.$container.style.top = topOffset + "px";
 
-    if (editor) editor.style.display = "none";
-    if (editors) editors.style.display = "none";
+    this.hideEditor();
 
     const existingContainer = document.querySelector(".notebook-viewer");
     if (existingContainer) {
@@ -603,14 +622,55 @@ class JupyterReader {
     this.$container.style.display = "block";
   }
 
+  hideEditor() {
+    const selectors = [
+      "#editor",
+      "#editors", 
+      ".editor-container",
+      ".ace_editor",
+      ".cm-editor"
+    ];
+
+    selectors.forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) {
+        el.style.display = "none";
+      }
+    });
+
+    const editorArea = document.querySelector("#editor-area");
+    if (editorArea) {
+      editorArea.style.display = "none";
+    }
+  }
+
+  showEditor() {
+    const selectors = [
+      "#editor",
+      "#editors",
+      ".editor-container",
+      ".ace_editor", 
+      ".cm-editor"
+    ];
+
+    selectors.forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) {
+        el.style.display = "";
+      }
+    });
+
+    const editorArea = document.querySelector("#editor-area");
+    if (editorArea) {
+      editorArea.style.display = "";
+    }
+  }
+
   hideNotebookFromEditor() {
     if (this.$container) {
       this.$container.style.display = "none";
     }
-    const editor = document.getElementById("editor");
-    const editors = document.getElementById("editors");
-    if (editor) editor.style.display = "";
-    if (editors) editors.style.display = "";
+    this.showEditor();
   }
 }
 
