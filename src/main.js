@@ -343,18 +343,6 @@ class JupyterReader {
 
       loader.hide();
 
-      const existingFile = editorManager.getFile(uri, "uri");
-      if (existingFile) {
-        editorManager.switchFile(existingFile);
-      } else {
-        const tempFile = editorManager.createFile(uri, {
-          name: filename,
-          uri: uri,
-          language: "json"
-        });
-        editorManager.switchFile(tempFile);
-      }
-
       this.notebookData = notebookData;
       this.currentFile = uri;
       this.renderNotebook(filename);
