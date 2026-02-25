@@ -55,8 +55,17 @@ class JupyterReader {
 
       // Read the file
       const fileOp = acode.fsOperation(uri);
+      if (!fileOp) {
+        throw new Error("File not found");
+      }
+      
       const content = await fileOp.readFile("utf-8");
-      const notebookData = JSON.parse(content);
+      let notebookData;
+      try {
+        notebookData = JSON.parse(content);
+      } catch (parseError) {
+        throw new Error("Invalid JSON file");
+      }
 
       this.notebookData = notebookData;
       this.currentFile = uri;
@@ -290,7 +299,7 @@ class JupyterReader {
         className: "output output-error"
       });
       
-      const traceback = output.traceback ? output.traceback.join("\n") : output.evalue;
+      const traceback = output.traceback ? output.traceback.join("\n") : (output.evalue || "Unknown error");
       errorContent.innerHTML = `<pre>${this.escapeHtml(traceback)}</pre>`;
       
       promptArea.appendChild(errorContent);
