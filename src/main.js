@@ -70,11 +70,41 @@ class JupyterReader {
 
       this.notebookData = notebookData;
       this.currentFile = uri;
+      
+      // Clean up previous notebook
+      this.removeNotebook();
+
+      // Add to recent files
+      this.addToRecentFiles(uri, filename);
+
       this.renderNotebook(filename);
 
     } catch (error) {
       acode.alert("Error", `Failed to open notebook: ${error.message}`);
     }
+  }
+
+  addToRecentFiles(uri, filename) {
+    try {
+      const fileList = acode.require("fileList");
+      if (fileList) {
+        fileList.add({
+          name: filename,
+          url: uri,
+          isDirectory: false
+        });
+      }
+    } catch (e) {
+      // Ignore if fileList not available
+    }
+  }
+
+  removeNotebook() {
+    if (this.$container) {
+      this.$container.remove();
+      this.$container = null;
+    }
+    this.showEditor();
   }
 
   renderNotebook(filename) {
