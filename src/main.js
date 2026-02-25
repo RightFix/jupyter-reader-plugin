@@ -10,20 +10,12 @@ class JupyterReader {
     this.notebookData = null;
     this.currentFile = null;
     this.$container = null;
-    this.isCodeMirror = false;
-    this.editorContainer = null;
   }
 
   init(baseUrl) {
     this.baseUrl = baseUrl;
     this.injectStyles();
-    this.detectEditor();
     this.registerFileHandler();
-    this.setupEditorHooks();
-  }
-
-  detectEditor() {
-    this.isCodeMirror = editorManager.isCodeMirror === true;
   }
 
   registerFileHandler() {
@@ -33,20 +25,6 @@ class JupyterReader {
         await this.openNotebookFile(file.uri, file.name);
       }
     });
-  }
-
-  setupEditorHooks() {
-    editorManager.on("switch-file", (file) => {
-      this.onSwitchFile(file);
-    });
-  }
-
-  onSwitchFile(file) {
-    if (file && file.uri === this.currentFile) {
-      this.showNotebookInEditor();
-    } else {
-      this.hideNotebookFromEditor();
-    }
   }
 
   injectStyles() {
@@ -60,11 +38,13 @@ class JupyterReader {
   async openNotebookFile(uri, filename) {
     let loader = null;
     try {
+      // Clean up any existing notebook first
+      this.removeNotebook();
+
       // Check if file is already open
       const existingFile = editorManager.getFile(uri, "uri");
       if (existingFile) {
         editorManager.switchFile(existingFile.id);
-        // Show existing notebook
         this.currentFile = uri;
         this.renderNotebook(filename);
         return;
@@ -78,18 +58,8 @@ class JupyterReader {
       const content = await fileOp.readFile("utf-8");
       const notebookData = JSON.parse(content);
 
-      // Clean up previous notebook first
-      this.removeNotebook();
-
       this.notebookData = notebookData;
       this.currentFile = uri;
-
-      // Create a new editor file
-      const file = acode.newEditorFile(filename, {
-        uri: uri,
-        url: uri,
-        language: "json"
-      });
 
       // Add to editor
       editorManager.addNewFile(filename, {
@@ -362,11 +332,6 @@ class JupyterReader {
     this.$container.style.top = topOffset + "px";
 
     this.hideEditor();
-
-    const existingContainer = document.querySelector(".notebook-viewer");
-    if (existingContainer) {
-      existingContainer.remove();
-    }
 
     if (main) {
       main.appendChild(this.$container);
