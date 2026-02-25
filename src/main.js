@@ -58,44 +58,56 @@ class JupyterReader {
   }
 
   async openNotebookFile(uri, filename) {
+    let loader = null;
     try {
-      const loader = acode.loader("Loading notebook...", "Please wait");
+      // Check if file is already open
+      const existingFile = editorManager.getFile(uri, "uri");
+      if (existingFile) {
+        editorManager.switchFile(existingFile.id);
+        // Show existing notebook
+        this.currentFile = uri;
+        this.renderNotebook(filename);
+        return;
+      }
+
+      loader = acode.loader("Loading notebook...", "Please wait");
       loader.show();
 
+      // Read the file
       const fileOp = acode.fsOperation(uri);
       const content = await fileOp.readFile("utf-8");
       const notebookData = JSON.parse(content);
 
-      loader.hide();
+      // Clean up previous notebook first
+      this.removeNotebook();
 
       this.notebookData = notebookData;
       this.currentFile = uri;
-      
-      // Clean up previous notebook
-      this.removeNotebook();
 
-      // Add to recent files
-      this.addToRecentFiles(uri, filename);
+      // Create a new editor file
+      const file = acode.newEditorFile(filename, {
+        uri: uri,
+        url: uri,
+        language: "json"
+      });
 
+      // Add to editor
+      editorManager.addNewFile(filename, {
+        uri: uri,
+        url: uri,
+        language: "json"
+      });
+
+      // Render the notebook viewer
       this.renderNotebook(filename);
 
     } catch (error) {
+      console.error("Error opening notebook:", error);
       acode.alert("Error", `Failed to open notebook: ${error.message}`);
-    }
-  }
-
-  addToRecentFiles(uri, filename) {
-    try {
-      const fileList = acode.require("fileList");
-      if (fileList) {
-        fileList.add({
-          name: filename,
-          url: uri,
-          isDirectory: false
-        });
+    } finally {
+      if (loader) {
+        loader.hide();
       }
-    } catch (e) {
-      // Ignore if fileList not available
     }
   }
 
